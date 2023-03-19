@@ -1,13 +1,13 @@
 {
   "version": "0.1.0",
-  "description": "An example Snap written in TypeScript.",
-  "proposedName": "TypeScript Example Snap",
+  "description": "A Snap to support XRP.",
+  "proposedName": "Snap for XRP",
   "repository": {
     "type": "git",
     "url": "https://github.com/MetaMask/template-snap-monorepo.git"
   },
   "source": {
-    "shasum": "33+J12vD5TgzRXKVlZ9pXFdQTqy7gpPePi6hgajD5FQ=",
+    "shasum": "pFfhpDXGQat6hmcbfD2jwWmBPwNfVOfXvY2/+YW3bek=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
@@ -25,7 +25,7 @@
     },
     "snap_getBip44Entropy": [
       {
-        "coinType": 3
+        "coinType": 144
       }
     ]
   },

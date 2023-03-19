@@ -19,11 +19,11 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
   origin,
   request,
 }) => {
-  // Get the Dogecoin node, corresponding to the path m/44'/3'
-  const dogecoinNode = await snap.request({
+  // Get the XRP node
+  const xrpNode = await snap.request({
     method: 'snap_getBip44Entropy',
     params: {
-      coinType: 3,
+      coinType: 144,
     },
   });
 
@@ -31,14 +31,14 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
    * Creates a function that takes an index and returns an extended private key for m/44'/3'/0'/0/address_index
    * The second parameter to getBIP44AddressKeyDeriver is not passed. This sets account and change to 0
    */
-  const deriveDogecoinAddress = await getBIP44AddressKeyDeriver(
-    dogecoinNode as BIP44CoinTypeNode, // TODO Check the type rather assume casting would work
+  const deriveXRPAddress = await getBIP44AddressKeyDeriver(
+    xrpNode as BIP44CoinTypeNode, // TODO Check the type rather assume casting would work
   );
-  const dogeAccount = await deriveDogecoinAddress(0);
+  const xrpAccount = await deriveXRPAddress(0);
 
   switch (request.method) {
     case 'hello':
-      console.log(`Dogecoin address: ${dogeAccount.address}`);
+      console.log(`XRP address: ${xrpAccount.address}`);
 
       return snap.request({
         method: 'snap_dialog',
