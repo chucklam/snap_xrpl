@@ -1,0 +1,741 @@
+diff --git a/dist/npm/Wallet/index.js b/dist/npm/Wallet/index.js
+index 04c4c39951ff1ba8316e01e4ed0efe5b75acf915..a129b50cf1f9614cfa9d939ba087797af827010f 100644
+--- a/dist/npm/Wallet/index.js
++++ b/dist/npm/Wallet/index.js
+@@ -6,7 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
+ const bignumber_js_1 = __importDefault(require("bignumber.js"));
+ const bip32_1 = require("bip32");
+ const bip39_1 = require("bip39");
+-const isEqual_1 = __importDefault(require("lodash/isEqual"));
++// const isEqual_1 = __importDefault(require("lodash/isEqual"));
++const isEqual_1 = __importDefault(require("../lodash/isEqual"));
+ const ripple_address_codec_1 = require("ripple-address-codec");
+ const ripple_binary_codec_1 = require("ripple-binary-codec");
+ const ripple_keypairs_1 = require("ripple-keypairs");
+diff --git a/dist/npm/Wallet/signer.js b/dist/npm/Wallet/signer.js
+index 35c049ba3a1e0755bb7236773ee5887373e878ce..0a31c8ab3ad617d95196542ed8bb769f55b9bca2 100644
+--- a/dist/npm/Wallet/signer.js
++++ b/dist/npm/Wallet/signer.js
+@@ -2,7 +2,8 @@
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.multisign = exports.verifySignature = exports.authorizeChannel = void 0;
+ const bignumber_js_1 = require("bignumber.js");
+-const lodash_1 = require("lodash");
++// const lodash_1 = require("lodash");
++const flatMap_1 = require("../lodash/flatMap");
+ const ripple_address_codec_1 = require("ripple-address-codec");
+ const ripple_binary_codec_1 = require("ripple-binary-codec");
+ const ripple_keypairs_1 = require("ripple-keypairs");
+@@ -51,7 +52,8 @@ function validateTransactionEquivalence(transactions) {
+     }
+ }
+ function getTransactionWithAllSigners(transactions) {
+-    const sortedSigners = (0, lodash_1.flatMap)(transactions, (tx) => { var _a; return (_a = tx.Signers) !== null && _a !== void 0 ? _a : []; }).sort(compareSigners);
++    // const sortedSigners = (0, lodash_1.flatMap)(transactions, (tx) => { var _a; return (_a = tx.Signers) !== null && _a !== void 0 ? _a : []; }).sort(compareSigners);
++    const sortedSigners = (0, flatMap_1)(transactions, (tx) => { var _a; return (_a = tx.Signers) !== null && _a !== void 0 ? _a : []; }).sort(compareSigners);
+     return Object.assign(Object.assign({}, transactions[0]), { Signers: sortedSigners });
+ }
+ function compareSigners(left, right) {
+diff --git a/dist/npm/client/connection.js b/dist/npm/client/connection.js
+index 7bd2fd9e137d76d23b3685d46a686c7b3ef5e461..a6c4b5089118848c91b9b9a738f5e5698f9ea7b4 100644
+--- a/dist/npm/client/connection.js
++++ b/dist/npm/client/connection.js
+@@ -14,7 +14,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.Connection = exports.INTENTIONAL_DISCONNECT_CODE = void 0;
+ const events_1 = require("events");
+-const omitBy_1 = __importDefault(require("lodash/omitBy"));
++// const omitBy_1 = __importDefault(require("lodash/omitBy"));
++const omitBy_1 = __importDefault(require("../lodash/omitBy"));
+ const ws_1 = __importDefault(require("ws"));
+ const errors_1 = require("../errors");
+ const ConnectionManager_1 = __importDefault(require("./ConnectionManager"));
+diff --git a/dist/npm/index.js b/dist/npm/index.js
+index 13b1b5836f498631a38bd9ac5e3446360ecbb918..fd60561ef2003766131296a86332995dc8ce94be 100644
+--- a/dist/npm/index.js
++++ b/dist/npm/index.js
+@@ -1,4 +1,5 @@
+ "use strict";
++globalThis.Buffer = require('buffer/').Buffer;
+ var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+     if (k2 === undefined) k2 = k;
+     var desc = Object.getOwnPropertyDescriptor(m, k);
+diff --git a/dist/npm/lodash/.internal/baseFlatten.js b/dist/npm/lodash/.internal/baseFlatten.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..ae87ca29f07775e318700e539258094453eabd08
+--- /dev/null
++++ b/dist/npm/lodash/.internal/baseFlatten.js
+@@ -0,0 +1,38 @@
++// import isFlattenable from './isFlattenable.js'
++const isFlattenable = require('./isFlattenable.js');
++
++/**
++ * The base implementation of `flatten` with support for restricting flattening.
++ *
++ * @private
++ * @param {Array} array The array to flatten.
++ * @param {number} depth The maximum recursion depth.
++ * @param {boolean} [predicate=isFlattenable] The function invoked per iteration.
++ * @param {boolean} [isStrict] Restrict to values that pass `predicate` checks.
++ * @param {Array} [result=[]] The initial result value.
++ * @returns {Array} Returns the new flattened array.
++ */
++function baseFlatten(array, depth, predicate, isStrict, result) {
++  predicate || (predicate = isFlattenable)
++  result || (result = [])
++
++  if (array == null) {
++    return result
++  }
++
++  for (const value of array) {
++    if (depth > 0 && predicate(value)) {
++      if (depth > 1) {
++        // Recursively flatten arrays (susceptible to call stack limits).
++        baseFlatten(value, depth - 1, predicate, isStrict, result)
++      } else {
++        result.push(...value)
++      }
++    } else if (!isStrict) {
++      result[result.length] = value
++    }
++  }
++  return result
++}
++
++// export default baseFlatten
+\ No newline at end of file
+diff --git a/dist/npm/lodash/.internal/getTag.js b/dist/npm/lodash/.internal/getTag.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..8b9a79621005cd6ef59319cd5376cbb081e554dc
+--- /dev/null
++++ b/dist/npm/lodash/.internal/getTag.js
+@@ -0,0 +1,17 @@
++const toString = Object.prototype.toString
++
++/**
++ * Gets the `toStringTag` of `value`.
++ *
++ * @private
++ * @param {*} value The value to query.
++ * @returns {string} Returns the `toStringTag`.
++ */
++function getTag(value) {
++  if (value == null) {
++    return value === undefined ? '[object Undefined]' : '[object Null]'
++  }
++  return toString.call(value)
++}
++
++// export default getTag
+\ No newline at end of file
+diff --git a/dist/npm/lodash/.internal/isFlattenable.js b/dist/npm/lodash/.internal/isFlattenable.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..ff38ad62d1f4340437751ac5c123b5332a1c8cc5
+--- /dev/null
++++ b/dist/npm/lodash/.internal/isFlattenable.js
+@@ -0,0 +1,19 @@
++// import isArguments from '../isArguments.js'
++const isArguments = require('../isArguments.js');
++
++/** Built-in value reference. */
++const spreadableSymbol = Symbol.isConcatSpreadable
++
++/**
++ * Checks if `value` is a flattenable `arguments` object or array.
++ *
++ * @private
++ * @param {*} value The value to check.
++ * @returns {boolean} Returns `true` if `value` is flattenable, else `false`.
++ */
++function isFlattenable(value) {
++  return Array.isArray(value) || isArguments(value) ||
++    !!(value && value[spreadableSymbol])
++}
++
++// export default isFlattenable
+\ No newline at end of file
+diff --git a/dist/npm/lodash/flatMap.js b/dist/npm/lodash/flatMap.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..00ed536cd169a3ff83d539cf73e276643180b44a
+--- /dev/null
++++ b/dist/npm/lodash/flatMap.js
+@@ -0,0 +1,30 @@
++// import baseFlatten from './.internal/baseFlatten.js'
++// import map from './map.js'
++const baseFlatten = require('./.internal/baseFlatten.js');
++const map = require('./map');
++
++/**
++ * Creates a flattened array of values by running each element in `collection`
++ * thru `iteratee` and flattening the mapped results. The iteratee is invoked
++ * with three arguments: (value, index|key, collection).
++ *
++ * @since 4.0.0
++ * @category Collection
++ * @param {Array|Object} collection The collection to iterate over.
++ * @param {Function} iteratee The function invoked per iteration.
++ * @returns {Array} Returns the new flattened array.
++ * @see flatMapDeep, flatMapDepth, flatten, flattenDeep, flattenDepth, map, mapKeys, mapValues
++ * @example
++ *
++ * function duplicate(n) {
++ *   return [n, n]
++ * }
++ *
++ * flatMap([1, 2], duplicate)
++ * // => [1, 1, 2, 2]
++ */
++function flatMap(collection, iteratee) {
++  return baseFlatten(map(collection, iteratee), 1)
++}
++
++// export default flatMap
+\ No newline at end of file
+diff --git a/dist/npm/lodash/flatten.js b/dist/npm/lodash/flatten.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..9ac737bfb8bf2efc6efda4afabcc712396f13cd8
+--- /dev/null
++++ b/dist/npm/lodash/flatten.js
+@@ -0,0 +1,22 @@
++// import baseFlatten from './.internal/baseFlatten.js'
++const baseFlatten = require('./.internal/baseFlatten.js');
++
++/**
++ * Flattens `array` a single level deep.
++ *
++ * @since 0.1.0
++ * @category Array
++ * @param {Array} array The array to flatten.
++ * @returns {Array} Returns the new flattened array.
++ * @see flatMap, flatMapDeep, flatMapDepth, flattenDeep, flattenDepth
++ * @example
++ *
++ * flatten([1, [2, [3, [4]], 5]])
++ * // => [1, 2, [3, [4]], 5]
++ */
++function flatten(array) {
++  const length = array == null ? 0 : array.length
++  return length ? baseFlatten(array, 1) : []
++}
++
++// export default flatten
+\ No newline at end of file
+diff --git a/dist/npm/lodash/groupBy.js b/dist/npm/lodash/groupBy.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..d7321d836464affda7da4019d0611b109f751387
+--- /dev/null
++++ b/dist/npm/lodash/groupBy.js
+@@ -0,0 +1,14 @@
++function groupBy(collection, iteratee){
++  let output = {}
++  for(let i = 0; i < collection.length; i++){
++    let key = iteratee(collection[i])
++    if(output.hasOwnProperty(key)){
++      output[key].push(collection[i])
++    }
++    else{
++      output[key] = [collection[i]]
++    }
++    
++  }
++  return output
++}
+\ No newline at end of file
+diff --git a/dist/npm/lodash/isArguments.js b/dist/npm/lodash/isArguments.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..00daa8b02a30acf492eeba2caf1ad660bf050257
+--- /dev/null
++++ b/dist/npm/lodash/isArguments.js
+@@ -0,0 +1,25 @@
++// import getTag from './.internal/getTag.js'
++// import isObjectLike from './isObjectLike.js'
++const getTag = require('./.internal/getTag.js');
++const isObjectLike = require('./isObjectLike.js');
++
++/**
++ * Checks if `value` is likely an `arguments` object.
++ *
++ * @since 0.1.0
++ * @category Lang
++ * @param {*} value The value to check.
++ * @returns {boolean} Returns `true` if `value` is an `arguments` object, else `false`.
++ * @example
++ *
++ * isArguments(function() { return arguments }())
++ * // => true
++ *
++ * isArguments([1, 2, 3])
++ * // => false
++ */
++function isArguments(value) {
++  return isObjectLike(value) && getTag(value) == '[object Arguments]'
++}
++
++// export default isArguments
+\ No newline at end of file
+diff --git a/dist/npm/lodash/isEqual.js b/dist/npm/lodash/isEqual.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..6be7d62825249c73249295d5312c078fb822832c
+--- /dev/null
++++ b/dist/npm/lodash/isEqual.js
+@@ -0,0 +1,139 @@
++function isEqual( a, b, enforce_properties_order, cyclic ) {
++  return a === b       // strick equality should be enough unless zero
++    && a !== 0         // because 0 === -0, requires test by _equals()
++    || _equals( a, b ) // handles not strictly equal or zero values
++  ;
++  
++  function _equals( a, b ) {
++    // a and b have already failed test for strict equality or are zero
++    
++    var s, l, p, x, y;
++    
++    // They should have the same toString() signature
++    if ( ( s = toString.call( a ) ) !== toString.call( b ) ) return false;
++    
++    switch( s ) {
++      default: // Boolean, Date, String
++        return a.valueOf() === b.valueOf();
++      
++      case '[object Number]':
++        // Converts Number instances into primitive values
++        // This is required also for NaN test bellow
++        a = +a;
++        b = +b;
++        
++        return a ?         // a is Non-zero and Non-NaN
++            a === b
++          :                // a is 0, -0 or NaN
++            a === a ?      // a is 0 or -O
++            1/a === 1/b    // 1/0 !== 1/-0 because Infinity !== -Infinity
++          : b !== b        // NaN, the only Number not equal to itself!
++        ;
++      // [object Number]
++      
++      case '[object RegExp]':
++        return a.source   == b.source
++          && a.global     == b.global
++          && a.ignoreCase == b.ignoreCase
++          && a.multiline  == b.multiline
++          && a.lastIndex  == b.lastIndex
++        ;
++      // [object RegExp]
++      
++      case '[object Function]':
++        return false; // functions should be strictly equal because of closure context
++      // [object Function]
++      
++      case '[object Array]':
++        if ( cyclic && ( x = reference_equals( a, b ) ) !== null ) return x; // intentionally duplicated bellow for [object Object]
++        
++        if ( ( l = a.length ) != b.length ) return false;
++        // Both have as many elements
++        
++        while ( l-- ) {
++          if ( ( x = a[ l ] ) === ( y = b[ l ] ) && x !== 0 || _equals( x, y ) ) continue;
++          
++          return false;
++        }
++        
++        return true;
++      // [object Array]
++      
++      case '[object Object]':
++        if ( cyclic && ( x = reference_equals( a, b ) ) !== null ) return x; // intentionally duplicated from above for [object Array]
++        
++        l = 0; // counter of own properties
++        
++        if ( enforce_properties_order ) {
++          var properties = [];
++          
++          for ( p in a ) {
++            if ( a.hasOwnProperty( p ) ) {
++              properties.push( p );
++              
++              if ( ( x = a[ p ] ) === ( y = b[ p ] ) && x !== 0 || _equals( x, y ) ) continue;
++              
++              return false;
++            }
++          }
++          
++          // Check if 'b' has as the same properties as 'a' in the same order
++          for ( p in b )
++            if ( b.hasOwnProperty( p ) && properties[ l++ ] != p )
++              return false;
++        } else {
++          for ( p in a ) {
++            if ( a.hasOwnProperty( p ) ) {
++              ++l;
++              
++              if ( ( x = a[ p ] ) === ( y = b[ p ] ) && x !== 0 || _equals( x, y ) ) continue;
++              
++              return false;
++            }
++          }
++          
++          // Check if 'b' has as not more own properties than 'a'
++          for ( p in b )
++            if ( b.hasOwnProperty( p ) && --l < 0 )
++              return false;
++        }
++        
++        return true;
++      // [object Object]
++    } // switch toString.call( a )
++  } // _equals()
++
++  /* -----------------------------------------------------------------------------------------
++    reference_equals( a, b )
++    
++    Helper function to compare object references on cyclic objects or arrays.
++    
++    Returns:
++      - null if a or b is not part of a cycle, adding them to object_references array
++      - true: same cycle found for a and b
++      - false: different cycle found for a and b
++    
++    On the first call of a specific invocation of equal(), replaces self with inner function
++    holding object_references array object in closure context.
++    
++    This allows to create a context only if and when an invocation of equal() compares
++    objects or arrays.
++  */
++  function reference_equals( a, b ) {
++      var object_references = [];
++      
++      return ( reference_equals = _reference_equals )( a, b );
++      
++      function _reference_equals( a, b ) {
++        var l = object_references.length;
++        
++        while ( l-- )
++          if ( object_references[ l-- ] === b )
++            return object_references[ l ] === a;
++        
++        object_references.push( a, b );
++        
++        return null;
++      } // _reference_equals()
++    } // reference_equals()
++} // equals()
+\ No newline at end of file
+diff --git a/dist/npm/lodash/isObjectLike.js b/dist/npm/lodash/isObjectLike.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..70ad3421feefe3becec781e3eee2908903f2ed87
+--- /dev/null
++++ b/dist/npm/lodash/isObjectLike.js
+@@ -0,0 +1,27 @@
++/**
++ * Checks if `value` is object-like. A value is object-like if it's not `null`
++ * and has a `typeof` result of "object".
++ *
++ * @since 4.0.0
++ * @category Lang
++ * @param {*} value The value to check.
++ * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
++ * @example
++ *
++ * isObjectLike({})
++ * // => true
++ *
++ * isObjectLike([1, 2, 3])
++ * // => true
++ *
++ * isObjectLike(Function)
++ * // => false
++ *
++ * isObjectLike(null)
++ * // => false
++ */
++function isObjectLike(value) {
++  return typeof value === 'object' && value !== null
++}
++
++// export default isObjectLike
+\ No newline at end of file
+diff --git a/dist/npm/lodash/map.js b/dist/npm/lodash/map.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..854beac587d0d0af62e9c266146a9df4b938ba34
+--- /dev/null
++++ b/dist/npm/lodash/map.js
+@@ -0,0 +1,30 @@
++/**
++ * Creates an array of values by running each element of `array` thru `iteratee`.
++ * The iteratee is invoked with three arguments: (value, index, array).
++ *
++ * @since 5.0.0
++ * @category Array
++ * @param {Array} array The array to iterate over.
++ * @param {Function} iteratee The function invoked per iteration.
++ * @returns {Array} Returns the new mapped array.
++ * @example
++ *
++ * function square(n) {
++ *   return n * n
++ * }
++ *
++ * map([4, 8], square)
++ * // => [16, 64]
++ */
++function map(array, iteratee) {
++  let index = -1
++  const length = array == null ? 0 : array.length
++  const result = new Array(length)
++
++  while (++index < length) {
++    result[index] = iteratee(array[index], index, array)
++  }
++  return result
++}
++
++// export default map
+\ No newline at end of file
+diff --git a/dist/npm/lodash/omitBy.js b/dist/npm/lodash/omitBy.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..0672f491010da9aaec7e6e8b2545f7f70da5956d
+--- /dev/null
++++ b/dist/npm/lodash/omitBy.js
+@@ -0,0 +1,37 @@
++// var baseIteratee = require('./_baseIteratee'),
++//     negate = require('./negate'),
++//     pickBy = require('./pickBy');
++
++/**
++ * The opposite of `_.pickBy`; this method creates an object composed of
++ * the own and inherited enumerable string keyed properties of `object` that
++ * `predicate` doesn't return truthy for. The predicate is invoked with two
++ * arguments: (value, key).
++ *
++ * @static
++ * @memberOf _
++ * @since 4.0.0
++ * @category Object
++ * @param {Object} object The source object.
++ * @param {Function} [predicate=_.identity] The function invoked per property.
++ * @returns {Object} Returns the new object.
++ * @example
++ *
++ * var object = { 'a': 1, 'b': '2', 'c': 3 };
++ *
++ * _.omitBy(object, _.isNumber);
++ * // => { 'b': '2' }
++ */
++// function omitBy(object, predicate) {
++//   return pickBy(object, negate(baseIteratee(predicate)));
++// }
++function omitBy(object, predicate = v => v) {
++  return Object.assign(
++      ...Object
++          .entries(object)
++          .filter(([, v]) => !predicate(v))
++          .map(([k, v]) => ({ [k]: v }))
++  );
++}
++
++module.exports = omitBy;
+\ No newline at end of file
+diff --git a/dist/npm/models/transactions/transaction.js b/dist/npm/models/transactions/transaction.js
+index 92db582c2c57f8e98e0b475efd35fca6dd6f49b1..db383b863cc1cdff2d9f7996470e481c2ec3d89e 100644
+--- a/dist/npm/models/transactions/transaction.js
++++ b/dist/npm/models/transactions/transaction.js
+@@ -4,8 +4,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
+ };
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.validate = void 0;
+-const isEqual_1 = __importDefault(require("lodash/isEqual"));
+-const omitBy_1 = __importDefault(require("lodash/omitBy"));
++// const isEqual_1 = __importDefault(require("lodash/isEqual"));
++// const omitBy_1 = __importDefault(require("lodash/omitBy"));
++const isEqual_1 = __importDefault(require("../../lodash/isEqual"));
++const omitBy_1 = __importDefault(require("../../lodash/omitBy"));
+ const ripple_binary_codec_1 = require("ripple-binary-codec");
+ const errors_1 = require("../../errors");
+ const flags_1 = require("../utils/flags");
+diff --git a/dist/npm/src/Wallet/index.js b/dist/npm/src/Wallet/index.js
+index 04c4c39951ff1ba8316e01e4ed0efe5b75acf915..980a73e6f28b72428c5dd4dd3a26dfcb5787ad50 100644
+--- a/dist/npm/src/Wallet/index.js
++++ b/dist/npm/src/Wallet/index.js
+@@ -6,7 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
+ const bignumber_js_1 = __importDefault(require("bignumber.js"));
+ const bip32_1 = require("bip32");
+ const bip39_1 = require("bip39");
+-const isEqual_1 = __importDefault(require("lodash/isEqual"));
++// const isEqual_1 = __importDefault(require("lodash/isEqual"));
++const isEqual_1 = __importDefault(require("../../lodash/isEqual"));
+ const ripple_address_codec_1 = require("ripple-address-codec");
+ const ripple_binary_codec_1 = require("ripple-binary-codec");
+ const ripple_keypairs_1 = require("ripple-keypairs");
+diff --git a/dist/npm/src/Wallet/signer.js b/dist/npm/src/Wallet/signer.js
+index 35c049ba3a1e0755bb7236773ee5887373e878ce..42231dfd0bb258ee0b3e01e247f19878730fc775 100644
+--- a/dist/npm/src/Wallet/signer.js
++++ b/dist/npm/src/Wallet/signer.js
+@@ -2,7 +2,8 @@
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.multisign = exports.verifySignature = exports.authorizeChannel = void 0;
+ const bignumber_js_1 = require("bignumber.js");
+-const lodash_1 = require("lodash");
++// const lodash_1 = require("lodash");
++const flatMap_1 = require("../../lodash/flatMap");
+ const ripple_address_codec_1 = require("ripple-address-codec");
+ const ripple_binary_codec_1 = require("ripple-binary-codec");
+ const ripple_keypairs_1 = require("ripple-keypairs");
+@@ -51,7 +52,8 @@ function validateTransactionEquivalence(transactions) {
+     }
+ }
+ function getTransactionWithAllSigners(transactions) {
+-    const sortedSigners = (0, lodash_1.flatMap)(transactions, (tx) => { var _a; return (_a = tx.Signers) !== null && _a !== void 0 ? _a : []; }).sort(compareSigners);
++    // const sortedSigners = (0, lodash_1.flatMap)(transactions, (tx) => { var _a; return (_a = tx.Signers) !== null && _a !== void 0 ? _a : []; }).sort(compareSigners);
++    const sortedSigners = (0, flatMap_1)(transactions, (tx) => { var _a; return (_a = tx.Signers) !== null && _a !== void 0 ? _a : []; }).sort(compareSigners);
+     return Object.assign(Object.assign({}, transactions[0]), { Signers: sortedSigners });
+ }
+ function compareSigners(left, right) {
+diff --git a/dist/npm/src/client/connection.js b/dist/npm/src/client/connection.js
+index 7bd2fd9e137d76d23b3685d46a686c7b3ef5e461..f4124d9d8d8cb7b4fe3a1cd7d5d37d568b1110f8 100644
+--- a/dist/npm/src/client/connection.js
++++ b/dist/npm/src/client/connection.js
+@@ -14,7 +14,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.Connection = exports.INTENTIONAL_DISCONNECT_CODE = void 0;
+ const events_1 = require("events");
+-const omitBy_1 = __importDefault(require("lodash/omitBy"));
++// const omitBy_1 = __importDefault(require("lodash/omitBy"));
++const omitBy_1 = __importDefault(require("../../lodash/omitBy"));
+ const ws_1 = __importDefault(require("ws"));
+ const errors_1 = require("../errors");
+ const ConnectionManager_1 = __importDefault(require("./ConnectionManager"));
+diff --git a/dist/npm/src/models/transactions/transaction.js b/dist/npm/src/models/transactions/transaction.js
+index 92db582c2c57f8e98e0b475efd35fca6dd6f49b1..6a37e3cf1593769d8d465a7e8f274bcc29b47e69 100644
+--- a/dist/npm/src/models/transactions/transaction.js
++++ b/dist/npm/src/models/transactions/transaction.js
+@@ -4,8 +4,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
+ };
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.validate = void 0;
+-const isEqual_1 = __importDefault(require("lodash/isEqual"));
+-const omitBy_1 = __importDefault(require("lodash/omitBy"));
++// const isEqual_1 = __importDefault(require("lodash/isEqual"));
++// const omitBy_1 = __importDefault(require("lodash/omitBy"));
++const isEqual_1 = __importDefault(require("../../../lodash/isEqual"));
++const omitBy_1 = __importDefault(require("../../../lodash/omitBy"));
+ const ripple_binary_codec_1 = require("ripple-binary-codec");
+ const errors_1 = require("../../errors");
+ const flags_1 = require("../utils/flags");
+diff --git a/dist/npm/src/sugar/balances.js b/dist/npm/src/sugar/balances.js
+index 7a9012fa59e51de7c7443c1d59a2c713f7573c14..54ccd6e6de4d99fcc4fb38d5624ff990ae50a28c 100644
+--- a/dist/npm/src/sugar/balances.js
++++ b/dist/npm/src/sugar/balances.js
+@@ -13,7 +13,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
+ };
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.getBalances = exports.getXrpBalance = void 0;
+-const flatMap_1 = __importDefault(require("lodash/flatMap"));
++// const flatMap_1 = __importDefault(require("lodash/flatMap"));
++const flatMap_1 = __importDefault(require("..//../lodash/flatMap"));
+ const utils_1 = require("../utils");
+ function formatBalances(trustlines) {
+     return trustlines.map((trustline) => ({
+diff --git a/dist/npm/src/sugar/getOrderbook.js b/dist/npm/src/sugar/getOrderbook.js
+index 4f8c7eebf1cb166414e90b1bc9056277c3c20f55..6167b6b2918b2b150d961fdebd5244770528cd83 100644
+--- a/dist/npm/src/sugar/getOrderbook.js
++++ b/dist/npm/src/sugar/getOrderbook.js
+@@ -13,7 +13,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
+ };
+ Object.defineProperty(exports, "__esModule", { value: true });
+ const bignumber_js_1 = __importDefault(require("bignumber.js"));
+-const flatMap_1 = __importDefault(require("lodash/flatMap"));
++// const flatMap_1 = __importDefault(require("lodash/flatMap"));
++const flatMap_1 = __importDefault(require("../../lodash/flatMap"));
+ const errors_1 = require("../errors");
+ const Offer_1 = require("../models/ledger/Offer");
+ const DEFAULT_LIMIT = 20;
+diff --git a/dist/npm/src/utils/getBalanceChanges.js b/dist/npm/src/utils/getBalanceChanges.js
+index 7c391f21382342b7b23fdee397ad1c794f09ef8a..d9009fc7c05b8bde564c2bbb84ea00305f1ab922 100644
+--- a/dist/npm/src/utils/getBalanceChanges.js
++++ b/dist/npm/src/utils/getBalanceChanges.js
+@@ -4,8 +4,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
+ };
+ Object.defineProperty(exports, "__esModule", { value: true });
+ const bignumber_js_1 = __importDefault(require("bignumber.js"));
+-const flatten_1 = __importDefault(require("lodash/flatten"));
+-const groupBy_1 = __importDefault(require("lodash/groupBy"));
++// const flatten_1 = __importDefault(require("lodash/flatten"));
++// const groupBy_1 = __importDefault(require("lodash/groupBy"));
++const flatten_1 = __importDefault(require("../../lodash/flatten"));
++const groupBy_1 = __importDefault(require("../../lodash/groupBy"));
+ const xrpConversion_1 = require("./xrpConversion");
+ function normalizeNode(affectedNode) {
+     const diffType = Object.keys(affectedNode)[0];
+diff --git a/dist/npm/src/utils/getNFTokenID.js b/dist/npm/src/utils/getNFTokenID.js
+index 85c0e9787646508e057b14bafd0bcd2f8461cc6e..3f94d2e6d0d19372ef397a17d6422f1d7a499bb2 100644
+--- a/dist/npm/src/utils/getNFTokenID.js
++++ b/dist/npm/src/utils/getNFTokenID.js
+@@ -3,7 +3,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
+     return (mod && mod.__esModule) ? mod : { "default": mod };
+ };
+ Object.defineProperty(exports, "__esModule", { value: true });
+-const flatMap_1 = __importDefault(require("lodash/flatMap"));
++// const flatMap_1 = __importDefault(require("lodash/flatMap"));
++const flatMap_1 = __importDefault(require("..//../lodash/flatMap"));
+ const metadata_1 = require("../models/transactions/metadata");
+ function getNFTokenID(meta) {
+     if (meta.AffectedNodes === undefined) {
+diff --git a/dist/npm/sugar/balances.js b/dist/npm/sugar/balances.js
+index 7a9012fa59e51de7c7443c1d59a2c713f7573c14..a057ab33b8fb4b3630a229c67bcc876049e92281 100644
+--- a/dist/npm/sugar/balances.js
++++ b/dist/npm/sugar/balances.js
+@@ -13,7 +13,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
+ };
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.getBalances = exports.getXrpBalance = void 0;
+-const flatMap_1 = __importDefault(require("lodash/flatMap"));
++// const flatMap_1 = __importDefault(require("lodash/flatMap"));
++const flatMap_1 = __importDefault(require("../lodash/flatMap"));
+ const utils_1 = require("../utils");
+ function formatBalances(trustlines) {
+     return trustlines.map((trustline) => ({
+diff --git a/dist/npm/sugar/getOrderbook.js b/dist/npm/sugar/getOrderbook.js
+index 4f8c7eebf1cb166414e90b1bc9056277c3c20f55..dbfc7c1f298b89f9df1573c377a81dfc6e61123c 100644
+--- a/dist/npm/sugar/getOrderbook.js
++++ b/dist/npm/sugar/getOrderbook.js
+@@ -13,7 +13,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
+ };
+ Object.defineProperty(exports, "__esModule", { value: true });
+ const bignumber_js_1 = __importDefault(require("bignumber.js"));
+-const flatMap_1 = __importDefault(require("lodash/flatMap"));
++// const flatMap_1 = __importDefault(require("lodash/flatMap"));
++const flatMap_1 = __importDefault(require("../lodash/flatMap"));
+ const errors_1 = require("../errors");
+ const Offer_1 = require("../models/ledger/Offer");
+ const DEFAULT_LIMIT = 20;
+diff --git a/dist/npm/utils/getBalanceChanges.js b/dist/npm/utils/getBalanceChanges.js
+index 7c391f21382342b7b23fdee397ad1c794f09ef8a..6fc0c1e59c669c23a6d2ef764c684f20eefb1b36 100644
+--- a/dist/npm/utils/getBalanceChanges.js
++++ b/dist/npm/utils/getBalanceChanges.js
+@@ -4,8 +4,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
+ };
+ Object.defineProperty(exports, "__esModule", { value: true });
+ const bignumber_js_1 = __importDefault(require("bignumber.js"));
+-const flatten_1 = __importDefault(require("lodash/flatten"));
+-const groupBy_1 = __importDefault(require("lodash/groupBy"));
++// const flatten_1 = __importDefault(require("lodash/flatten"));
++// const groupBy_1 = __importDefault(require("lodash/groupBy"));
++const flatten_1 = __importDefault(require("../lodash/flatten"));
++const groupBy_1 = __importDefault(require("../lodash/groupBy"));
+ const xrpConversion_1 = require("./xrpConversion");
+ function normalizeNode(affectedNode) {
+     const diffType = Object.keys(affectedNode)[0];
+diff --git a/dist/npm/utils/getNFTokenID.js b/dist/npm/utils/getNFTokenID.js
+index 85c0e9787646508e057b14bafd0bcd2f8461cc6e..572db518051a9f872f2d10f8d1e783db77128acc 100644
+--- a/dist/npm/utils/getNFTokenID.js
++++ b/dist/npm/utils/getNFTokenID.js
+@@ -3,7 +3,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
+     return (mod && mod.__esModule) ? mod : { "default": mod };
+ };
+ Object.defineProperty(exports, "__esModule", { value: true });
+-const flatMap_1 = __importDefault(require("lodash/flatMap"));
++// const flatMap_1 = __importDefault(require("lodash/flatMap"));
++const flatMap_1 = __importDefault(require("../lodash/flatMap"));
+ const metadata_1 = require("../models/transactions/metadata");
+ function getNFTokenID(meta) {
+     if (meta.AffectedNodes === undefined) {

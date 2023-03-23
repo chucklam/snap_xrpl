@@ -4,6 +4,7 @@ import {
   BIP44CoinTypeNode,
   getBIP44AddressKeyDeriver,
 } from '@metamask/key-tree';
+import { Wallet } from 'xrpl';
 
 /**
  * Handle incoming JSON-RPC requests, sent through `wallet_invokeSnap`.
@@ -34,11 +35,15 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
   const deriveXRPAddress = await getBIP44AddressKeyDeriver(
     xrpNode as BIP44CoinTypeNode, // TODO Check the type rather assume casting would work
   );
-  const xrpAccount = await deriveXRPAddress(0);
+  const derivedAccount = await deriveXRPAddress(0);
+  const xrpAccount =
+    derivedAccount.privateKeyBytes &&
+    Wallet.fromEntropy(derivedAccount.privateKeyBytes);
 
   switch (request.method) {
     case 'hello':
-      console.log(`XRP address: ${xrpAccount.address}`);
+      console.log(`XRP address: ${xrpAccount?.address}`);
+      console.log(`Derived account address: ${derivedAccount.address}`);
 
       return snap.request({
         method: 'snap_dialog',
