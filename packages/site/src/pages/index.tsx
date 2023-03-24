@@ -6,7 +6,7 @@ import {
   connectSnap,
   getSnap,
   sendGetAddress,
-  shouldDisplayReconnectButton,
+  // shouldDisplayReconnectButton,
 } from '../utils';
 import {
   ConnectButton,
@@ -167,34 +167,29 @@ const Index = () => {
             <b>An error happened:</b> {state.error.message}
           </ErrorMessage>
         )}
-        {!state.isFlask && (
-          <Card
-            content={{
-              title: 'Install',
-              description:
-                'Snaps is pre-release software only available in MetaMask Flask, ' +
-                'a canary distribution for developers with access to upcoming features.',
-              button: <InstallFlaskButton />,
-            }}
-            fullWidth
-          />
-        )}
-        {!state.installedSnap && (
-          <Card
-            content={{
-              title: 'Connect',
-              description:
-                'Get started by connecting to and installing the example snap.',
-              button: (
-                <ConnectButton
-                  onClick={handleConnectClick}
-                  disabled={!state.isFlask}
-                />
-              ),
-            }}
-            disabled={!state.isFlask}
-          />
-        )}
+        <Card
+          content={{
+            title: '1. Install Metamask Flask',
+            description: "Metamask is world's most popular wallet",
+            button: <InstallFlaskButton />,
+          }}
+          fullWidth
+          disabled={state.isFlask}
+        />
+        <Card
+          content={{
+            title: '2. Install XRP Snap',
+            description: 'Extend Metamask to work with XRP',
+            button: (
+              <ConnectButton
+                onClick={handleConnectClick}
+                disabled={!state.isFlask}
+              />
+            ),
+          }}
+          fullWidth
+          disabled={!state.isFlask || Boolean(state.installedSnap)}
+        />
         {/* {shouldDisplayReconnectButton(state.installedSnap) && (
           <Card
             content={{
@@ -214,7 +209,7 @@ const Index = () => {
         )} */}
         <Card
           content={{
-            title: 'XRP Address',
+            title: '3. Get XRP Address',
             description: xrpAddress || 'Get your XRP address from Metamask',
             button: (
               <GetXrpAddressButton
@@ -224,17 +219,13 @@ const Index = () => {
             ),
           }}
           disabled={!state.installedSnap || Boolean(xrpAddress)}
-          fullWidth={
-            state.isFlask &&
-            Boolean(state.installedSnap) &&
-            !shouldDisplayReconnectButton(state.installedSnap)
-          }
+          fullWidth
         />
         <Card
           content={{
-            title: 'Account Balance',
+            title: '4. Check Account Balance',
             description: xrpBalance
-              ? `${xrpBalance} XRP`
+              ? (<div>{xrpAddress} has <b>{xrpBalance} XRP</b></div>)
               : 'Get your XRP balance',
             button: (
               <GetXrpBalanceButton
@@ -244,11 +235,7 @@ const Index = () => {
             ),
           }}
           disabled={!state.installedSnap || !xrpAddress}
-          fullWidth={
-            state.isFlask &&
-            Boolean(state.installedSnap) &&
-            !shouldDisplayReconnectButton(state.installedSnap)
-          }
+          fullWidth
         />
         {/* <Notice>
           <p>
