@@ -98,6 +98,10 @@ export const GetXrpAddressButton = (props: ComponentProps<typeof Button>) => {
   return <Button {...props}>Get Address</Button>;
 };
 
+export const GetXrpBalanceButton = (props: ComponentProps<typeof Button>) => {
+  return <Button {...props}>Get Balance</Button>;
+};
+
 export const HeaderButtons = ({
   state,
   onConnectClick,

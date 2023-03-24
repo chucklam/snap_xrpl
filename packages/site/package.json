@@ -5,7 +5,7 @@
   "license": "(MIT-0 OR Apache-2.0)",
   "scripts": {
     "build": "cross-env GATSBY_TELEMETRY_DISABLED=1 gatsby build",
-    "clean": "rimraf public",
+    "clean": "gatsby clean && rimraf public",
     "lint": "yarn lint:eslint && yarn lint:misc --check",
     "lint:eslint": "eslint . --cache --ext js,ts",
     "lint:fix": "yarn lint:eslint --fix && yarn lint:misc --write",
@@ -26,10 +26,16 @@
   },
   "dependencies": {
     "@metamask/providers": "^9.0.0",
+    "buffer": "^6.0.3",
+    "crypto-browserify": "^3.12.0",
+    "https-browserify": "^1.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-is": "^18.2.0",
-    "styled-components": "5.3.3"
+    "stream-browserify": "^3.0.0",
+    "stream-http": "^3.2.0",
+    "styled-components": "5.3.3",
+    "xrpl": "^2.7.0"
   },
   "devDependencies": {
     "@metamask/eslint-config": "^10.0.0",
@@ -62,6 +68,7 @@
     "prettier": "^2.2.1",
     "prettier-plugin-packagejson": "^2.2.18",
     "rimraf": "^3.0.2",
-    "typescript": "^4.7.4"
+    "typescript": "^4.7.4",
+    "webpack": "^5.76.3"
   }
 }

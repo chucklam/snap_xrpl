@@ -1,5 +1,6 @@
 import { useContext, useState } from 'react';
 import styled from 'styled-components';
+import { Client } from 'xrpl';
 import { MetamaskActions, MetaMaskContext } from '../hooks';
 import {
   connectSnap,
@@ -13,6 +14,7 @@ import {
   // ReconnectButton,
   GetXrpAddressButton,
   Card,
+  GetXrpBalanceButton,
 } from '../components';
 
 const Container = styled.div`
@@ -102,6 +104,7 @@ const ErrorMessage = styled.div`
 const Index = () => {
   const [state, dispatch] = useContext(MetaMaskContext);
   const [xrpAddress, setXrpAddress] = useState<string>();
+  const [xrpBalance, setXrpBalance] = useState<string>();
 
   const handleConnectClick = async () => {
     try {
@@ -131,13 +134,32 @@ const Index = () => {
     }
   };
 
+  const handleGetBalanceClick = async () => {
+    try {
+      // Define the network client (testnet)
+      const client = new Client('wss://s.altnet.rippletest.net:51233');
+      await client.connect();
+
+      if (xrpAddress) {
+        const balance = await client.getXrpBalance(xrpAddress);
+        console.log(`XRP balance: ${balance}`);
+        setXrpBalance(balance);
+      }
+
+      client.disconnect();
+    } catch (e) {
+      console.error(e);
+      dispatch({ type: MetamaskActions.SetError, payload: e });
+    }
+  };
+
   return (
     <Container>
       <Heading>
-        Welcome to <Span>template-snap</Span>
+        XRP <Span>with</Span> Metamask
       </Heading>
       <Subtitle>
-        Get started by editing <code>src/index.ts</code>
+        made by <Span>ripe.money</Span>
       </Subtitle>
       <CardContainer>
         {state.error && (
@@ -202,6 +224,26 @@ const Index = () => {
             ),
           }}
           disabled={!state.installedSnap || Boolean(xrpAddress)}
+          fullWidth={
+            state.isFlask &&
+            Boolean(state.installedSnap) &&
+            !shouldDisplayReconnectButton(state.installedSnap)
+          }
+        />
+        <Card
+          content={{
+            title: 'Account Balance',
+            description: xrpBalance
+              ? `${xrpBalance} XRP`
+              : 'Get your XRP balance',
+            button: (
+              <GetXrpBalanceButton
+                onClick={handleGetBalanceClick}
+                disabled={!state.installedSnap}
+              />
+            ),
+          }}
+          disabled={!state.installedSnap || !xrpAddress}
           fullWidth={
             state.isFlask &&
             Boolean(state.installedSnap) &&
