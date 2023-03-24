@@ -41,7 +41,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
     Wallet.fromEntropy(derivedAccount.privateKeyBytes);
 
   switch (request.method) {
-    case 'hello':
+    case 'get_address':
       console.log(`XRP address: ${xrpAccount?.address}`);
       console.log(`Derived account address: ${derivedAccount.address}`);
 

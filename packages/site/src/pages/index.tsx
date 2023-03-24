@@ -4,7 +4,7 @@ import { MetamaskActions, MetaMaskContext } from '../hooks';
 import {
   connectSnap,
   getSnap,
-  sendHello,
+  sendGetAddress,
   shouldDisplayReconnectButton,
 } from '../utils';
 import {
@@ -120,7 +120,7 @@ const Index = () => {
 
   const handleGetAddressClick = async () => {
     try {
-      const address = await sendHello();
+      const address = await sendGetAddress();
       console.log(`xrpAddress: ${address}`);
       if (typeof address === 'string') {
         setXrpAddress(address);
