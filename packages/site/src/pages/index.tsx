@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react';
+import { ReactNode, useContext, useState } from 'react';
 import styled from 'styled-components';
 import { Client } from 'xrpl';
 import { MetamaskActions, MetaMaskContext } from '../hooks';
@@ -105,6 +105,7 @@ const Index = () => {
   const [state, dispatch] = useContext(MetaMaskContext);
   const [xrpAddress, setXrpAddress] = useState<string>();
   const [xrpBalance, setXrpBalance] = useState<string>();
+  const [isAccountFunded, setIsAccountFunded] = useState(true);
 
   const handleConnectClick = async () => {
     try {
@@ -144,13 +145,36 @@ const Index = () => {
         const balance = await client.getXrpBalance(xrpAddress);
         console.log(`XRP balance: ${balance}`);
         setXrpBalance(balance);
+        setIsAccountFunded(true);
       }
 
       client.disconnect();
     } catch (e) {
       console.error(e);
-      dispatch({ type: MetamaskActions.SetError, payload: e });
+      // dispatch({ type: MetamaskActions.SetError, payload: e });
+      setIsAccountFunded(false);
     }
+  };
+
+  const getBalanceDescription = (): ReactNode => {
+    if (!isAccountFunded) {
+      return (
+        <>
+          Your account is unfunded. Send some reserve to <b>{xrpAddress}</b>
+        </>
+      );
+    }
+
+    // let balanceDescription: ReactNode = 'Get your XRP balance';
+    if (xrpAddress && xrpBalance) {
+      return (
+        <>
+          {xrpAddress} has <b>{xrpBalance} XRP</b>
+        </>
+      );
+    }
+
+    return 'Get your XRP balance';
   };
 
   return (
@@ -224,9 +248,7 @@ const Index = () => {
         <Card
           content={{
             title: '4. Check Account Balance',
-            description: xrpBalance
-              ? (<div>{xrpAddress} has <b>{xrpBalance} XRP</b></div>)
-              : 'Get your XRP balance',
+            description: getBalanceDescription(),
             button: (
               <GetXrpBalanceButton
                 onClick={handleGetBalanceClick}
