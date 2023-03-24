@@ -1,5 +1,5 @@
 import { OnRpcRequestHandler } from '@metamask/snaps-types';
-import { panel, text } from '@metamask/snaps-ui';
+// import { panel, text } from '@metamask/snaps-ui';
 import {
   BIP44CoinTypeNode,
   getBIP44AddressKeyDeriver,
@@ -17,7 +17,7 @@ import { Wallet } from 'xrpl';
  * @throws If the request method is not valid for this snap.
  */
 export const onRpcRequest: OnRpcRequestHandler = async ({
-  origin,
+  // origin,
   request,
 }) => {
   // Get the XRP node
@@ -45,6 +45,8 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
       console.log(`XRP address: ${xrpAccount?.address}`);
       console.log(`Derived account address: ${derivedAccount.address}`);
 
+      return xrpAccount?.address;
+    /*
       return snap.request({
         method: 'snap_dialog',
         params: {
@@ -58,6 +60,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
           ]),
         },
       });
+      */
     default:
       throw new Error('Method not found.');
   }

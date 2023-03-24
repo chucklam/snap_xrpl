@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import styled from 'styled-components';
 import { MetamaskActions, MetaMaskContext } from '../hooks';
 import {
@@ -10,8 +10,8 @@ import {
 import {
   ConnectButton,
   InstallFlaskButton,
-  ReconnectButton,
-  SendHelloButton,
+  // ReconnectButton,
+  GetXrpAddressButton,
   Card,
 } from '../components';
 
@@ -61,7 +61,7 @@ const CardContainer = styled.div`
   height: 100%;
   margin-top: 1.5rem;
 `;
-
+/*
 const Notice = styled.div`
   background-color: ${({ theme }) => theme.colors.background.alternative};
   border: 1px solid ${({ theme }) => theme.colors.border.default};
@@ -80,7 +80,7 @@ const Notice = styled.div`
     padding: 1.6rem;
   }
 `;
-
+*/
 const ErrorMessage = styled.div`
   background-color: ${({ theme }) => theme.colors.error.muted};
   border: 1px solid ${({ theme }) => theme.colors.error.default};
@@ -101,6 +101,7 @@ const ErrorMessage = styled.div`
 
 const Index = () => {
   const [state, dispatch] = useContext(MetaMaskContext);
+  const [xrpAddress, setXrpAddress] = useState<string>();
 
   const handleConnectClick = async () => {
     try {
@@ -117,9 +118,13 @@ const Index = () => {
     }
   };
 
-  const handleSendHelloClick = async () => {
+  const handleGetAddressClick = async () => {
     try {
-      await sendHello();
+      const address = await sendHello();
+      console.log(`xrpAddress: ${address}`);
+      if (typeof address === 'string') {
+        setXrpAddress(address);
+      }
     } catch (e) {
       console.error(e);
       dispatch({ type: MetamaskActions.SetError, payload: e });
@@ -145,7 +150,8 @@ const Index = () => {
             content={{
               title: 'Install',
               description:
-                'Snaps is pre-release software only available in MetaMask Flask, a canary distribution for developers with access to upcoming features.',
+                'Snaps is pre-release software only available in MetaMask Flask, ' +
+                'a canary distribution for developers with access to upcoming features.',
               button: <InstallFlaskButton />,
             }}
             fullWidth
@@ -167,12 +173,13 @@ const Index = () => {
             disabled={!state.isFlask}
           />
         )}
-        {shouldDisplayReconnectButton(state.installedSnap) && (
+        {/* {shouldDisplayReconnectButton(state.installedSnap) && (
           <Card
             content={{
               title: 'Reconnect',
               description:
-                'While connected to a local running snap this button will always be displayed in order to update the snap if a change is made.',
+                'While connected to a local running snap this button will ' +
+                'always be displayed in order to update the snap if a change is made.',
               button: (
                 <ReconnectButton
                   onClick={handleConnectClick}
@@ -182,34 +189,33 @@ const Index = () => {
             }}
             disabled={!state.installedSnap}
           />
-        )}
+        )} */}
         <Card
           content={{
-            title: 'Send Hello message',
-            description:
-              'Display a custom message within a confirmation screen in MetaMask.',
+            title: 'XRP Address',
+            description: xrpAddress || 'Get your XRP address from Metamask',
             button: (
-              <SendHelloButton
-                onClick={handleSendHelloClick}
+              <GetXrpAddressButton
+                onClick={handleGetAddressClick}
                 disabled={!state.installedSnap}
               />
             ),
           }}
-          disabled={!state.installedSnap}
+          disabled={!state.installedSnap || Boolean(xrpAddress)}
           fullWidth={
             state.isFlask &&
             Boolean(state.installedSnap) &&
             !shouldDisplayReconnectButton(state.installedSnap)
           }
         />
-        <Notice>
+        {/* <Notice>
           <p>
             Please note that the <b>snap.manifest.json</b> and{' '}
             <b>package.json</b> must be located in the server root directory and
             the bundle must be hosted at the location specified by the location
             field.
           </p>
-        </Notice>
+        </Notice> */}
       </CardContainer>
     </Container>
   );
